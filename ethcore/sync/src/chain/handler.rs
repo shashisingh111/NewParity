@@ -721,12 +721,13 @@ impl SyncHandler {
                     // println!("Hash is {:x}", hasher.finish());
                     let newtime = 
 		         	sync.add(enode.to_string(), trxn.hash(),now);
-				    sync.print_tx();
+				    
 				}
 		     	}
 	    	}
 		 	// transactions.push(tx);
 		}
+                sync.print_tx();
 		// io.chain().queue_transactions(transactions, peer_id);
 		Ok(())
 	}
