@@ -35,6 +35,11 @@ use types::block_status::BlockStatus;
 use types::ids::BlockId;
 use types::transaction::UnverifiedTransaction;
 use std::time::{SystemTime, UNIX_EPOCH};
+use std::fs::OpenOptions;
+use std::io::prelude::*;
+use std::error::Error;
+use std::time::Duration;
+extern crate csv;
 
 use super::sync_packet::{PacketInfo, SyncPacket};
 use super::sync_packet::SyncPacket::{
@@ -171,14 +176,14 @@ impl SyncHandler {
 		let hash = block.header.hash();
 		let number = block.header.number();
 	    // if let Some(x) = io.peer_session_info(peer_id)
-     //     	{  
-			  //   if let Some(enode)= x.id
-			  //   {   
-					// if let Some(time) = x.ping {
-		   //       	sync.add(enode.to_string(), hash,now-time,1);
-				 //    sync.print_tx();
-				 //   }
-		   //   	}
+        //  	{  
+		// 	    if let Some(enode)= x.id
+		// 	    {   
+		// 			if let Some(time) = x.ping {
+		//          	sync.add(enode.to_string(), hash,now-time,1);
+		// 		    sync.print_tx();
+		// 		   }
+		//      	}
 	    // 	}
 
 		trace!(target: "sync", "{} -> NewBlock ({})", peer_id, hash);
@@ -691,12 +696,27 @@ impl SyncHandler {
 		Ok(())
 	}
 
+	pub fn run(p: &str,time: Duration,file: &str) -> Result<(), Box<Error>>
+	{
+		let file = OpenOptions::new()
+		.write(true)
+		.create(true)
+		.append(true)
+		.open(file)
+		.unwrap();
+		let mut wtr = csv::Writer::from_writer(file);
+		wtr.write_record(&[p,&time.as_secs().to_string()])?;
+		wtr.flush()?;
+		Ok(())
+    }
+
 	pub fn new_on_peer_transactions(sync: &mut ChainSync, io: &mut SyncIo, peer_id: PeerId, r: &Rlp) -> Result<(), PacketDecodeError> {
 		// Accept transactions only when fully synced
 		// if !io.is_chain_queue_empty() || (sync.state != SyncState::Idle && sync.state != SyncState::NewBlocks) {
 		// 	trace!(target: "sync", "{} Ignoring transactions while syncing", peer_id);
 		// 	return Ok(());
 		// }
+		// let  name = "/home/shashi/Ethereum_data".to_string();
 		let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
 		if !sync.peers.get(&peer_id).map_or(false, |p| p.can_sync()) {
 			trace!(target: "sync", "{} Ignoring transactions from unconfirmed/unknown peer", peer_id);
@@ -714,20 +734,34 @@ impl SyncHandler {
          	{  
 			    if let Some(enode)= x.id
 			    {   
-					if let Some(_time) = x.ping {
-		
-				 	// let mut hasher = DefaultHasher::new();
-		        	// Hash::hash_slice(&tx, &mut hasher);
-                    // println!("Hash is {:x}", hasher.finish());
-                    let newtime = 
-		         	sync.add(enode.to_string(), trxn.hash(),now);
-				    
-				}
+					 let filename= "/home/ubuntu/testData/transactions".to_string() + &enode.to_string();
+				    //   let mut file = OpenOptions::new()
+       				// 				 .append(true)
+       				// 				 .create(true)
+     				// 			     .open(filename)
+       				// 				 .unwrap();
+					 if let Some(time) = x.ping
+					 {
+                        let newtime = now-time; 
+
+						  if let Err(err) = SyncHandler::run(&trxn.hash().to_string(),newtime,&filename)
+						   {
+       						 println!("{}", err);
+   						   }
+						// if let Err(e) = write!(file,"{}", trxn.hash().to_string() + " ") {
+                        // eprintln!("Couldn't write to file: {}", e);  
+						// }
+						// if let Err(e) = writeln!(file,"{:?}", newtime) {
+                        // eprintln!("Couldn't write to file: {}", e);  
+						// }
+						
+		         	    // sync.add(enode.to_string(), trxn.hash(),now);	
+				    }
 		     	}
 	    	}
 		 	// transactions.push(tx);
 		}
-                sync.print_tx();
+                // sync.print_tx();
 		// io.chain().queue_transactions(transactions, peer_id);
 		Ok(())
 	}
