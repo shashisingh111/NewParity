@@ -159,13 +159,45 @@ impl SyncHandler {
 		}
 	}
 
+	pub fn block_run(info: Vec<String>,file: &str) -> Result<(), Box<Error>>
+	{
+		let file = OpenOptions::new()
+		.write(true)
+		.create(true)
+		.append(true)
+		.open(file)
+		.unwrap();
+		let mut wtr = csv::Writer::from_writer(file);
+		for i in info
+		{
+          wtr.write_field(i)?;
+          wtr.flush()?;
+        }
+        wtr.write_record(&[""])?;
+		Ok(())
+    }
+
+	pub fn trx_run(file: &str,trx: &str) -> Result<(), Box<Error>>
+	{
+		let file = OpenOptions::new()
+		.write(true)
+		.create(true)
+		.append(true)
+		.open(file)
+		.unwrap();
+		let mut wtr = csv::Writer::from_writer(file);
+		wtr.write_record(&[trx])?;
+		wtr.flush()?;
+		Ok(())
+    }
+
 	/// Called by peer once it has new block bodies
 	pub fn on_peer_new_block(sync: &mut ChainSync, io: &mut SyncIo, peer_id: PeerId, r: &Rlp) -> Result<(), DownloaderImportError> {
 		if !sync.peers.get(&peer_id).map_or(false, |p| p.can_sync()) {
 			trace!(target: "sync", "Ignoring new block from unconfirmed peer {}", peer_id);
 			return Ok(());
 		}
-		let now = Instant::now();
+		let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
 		let difficulty: U256 = r.val_at(1)?;
 		if let Some(ref mut peer) = sync.peers.get_mut(&peer_id) {
 			if peer.difficulty.map_or(true, |pd| difficulty > pd) {
@@ -175,6 +207,9 @@ impl SyncHandler {
 		let block = Unverified::from_rlp(r.at(0)?.as_raw().to_vec())?;
 		let hash = block.header.hash();
 		let number = block.header.number();
+		let transactions = &block.transactions;
+		let blockfile="/home/ubuntu/testData/blockdata/".to_string()+&hash.to_string()+".csv";
+	    let mut rec: Vec<String> = Vec::new();
 	    // if let Some(x) = io.peer_session_info(peer_id)
         //  	{  
 		// 	    if let Some(enode)= x.id
@@ -185,6 +220,46 @@ impl SyncHandler {
 		// 		   }
 		//      	}
 	    // 	}
+		if let Some(x) = io.peer_session_info(peer_id)
+        {  
+			    if let Some(enode)= x.id
+			    {   let enode1=enode.to_string();
+					 rec.push(enode1);
+					let blockHash=hash.to_string();
+					 rec.push(blockHash);
+					 let filename= "/home/ubuntu/testData/blocks/".to_string()+ "data"+".csv";
+					 if let Some(time) = x.ping
+					 {
+                          let newtime = (now-time).as_secs().to_string(); 
+                           rec.push(newtime);
+						  let sy = &sync.active_peers;
+						  for peer in sy.iter()
+						  {
+                             if let Some(peer_infos) = io.peer_session_info(*peer)
+							 {
+							  if let Some(nodeid) = peer_infos.id{
+							     let nodeid1 = nodeid.to_string();
+							     rec.push(nodeid1);
+							  }
+							 }
+						  }
+
+						  if let Err(err) = SyncHandler::block_run(rec,&filename)
+						   {
+       						 println!("{}", err);
+   						   }	
+				     }
+		     	}
+	    }
+
+		for i in transactions
+		{
+           if let Err(err) = SyncHandler::trx_run(&blockfile, &i.hash().to_string())
+			 {
+       			 println!("{}", err);
+   		     }
+		}
+		
 
 		trace!(target: "sync", "{} -> NewBlock ({})", peer_id, hash);
 		if number > sync.highest_block.unwrap_or(0) {
@@ -725,21 +800,14 @@ impl SyncHandler {
 
 		let item_count = r.item_count()?;
 		trace!(target: "sync", "{:02} -> Transactions ({} entries)", peer_id, item_count);
-		// let mut transactions = Vec::with_capacity(item_count);
 		for i in 0 .. item_count {
 			let rlp = r.at(i)?;
-			// let tx = rlp.as_raw().to_vec();
 			let trxn: UnverifiedTransaction = rlp::Decodable::decode(&rlp).unwrap();
 			if let Some(x) = io.peer_session_info(peer_id)
          	{  
 			    if let Some(enode)= x.id
 			    {   
-					 let filename= "/home/ubuntu/testData/transactions".to_string() + &enode.to_string();
-				    //   let mut file = OpenOptions::new()
-       				// 				 .append(true)
-       				// 				 .create(true)
-     				// 			     .open(filename)
-       				// 				 .unwrap();
+					 let filename= "/home/ubuntu/testData/transactions/".to_string() + &enode.to_string()+".csv";
 					 if let Some(time) = x.ping
 					 {
                         let newtime = now-time; 
@@ -747,22 +815,11 @@ impl SyncHandler {
 						  if let Err(err) = SyncHandler::run(&trxn.hash().to_string(),newtime,&filename)
 						   {
        						 println!("{}", err);
-   						   }
-						// if let Err(e) = write!(file,"{}", trxn.hash().to_string() + " ") {
-                        // eprintln!("Couldn't write to file: {}", e);  
-						// }
-						// if let Err(e) = writeln!(file,"{:?}", newtime) {
-                        // eprintln!("Couldn't write to file: {}", e);  
-						// }
-						
-		         	    // sync.add(enode.to_string(), trxn.hash(),now);	
+   						   }	
 				    }
 		     	}
 	    	}
-		 	// transactions.push(tx);
 		}
-                // sync.print_tx();
-		// io.chain().queue_transactions(transactions, peer_id);
 		Ok(())
 	}
 
