@@ -36,6 +36,8 @@ extern crate parking_lot;
 extern crate rand;
 extern crate rlp;
 extern crate triehash_ethereum;
+extern crate csv;
+extern crate serde_json;
 
 extern crate ethcore_light as light;
 

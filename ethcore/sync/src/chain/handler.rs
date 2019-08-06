@@ -39,7 +39,7 @@ use std::fs::OpenOptions;
 use std::io::prelude::*;
 use std::error::Error;
 use std::time::Duration;
-extern crate csv;
+
 
 use super::sync_packet::{PacketInfo, SyncPacket};
 use super::sync_packet::SyncPacket::{
@@ -203,7 +203,8 @@ impl SyncHandler {
 		let hash = block.header.hash();
 		let number = block.header.number();
 		let transactions = &block.transactions;
-		let blockfile="/home/ubuntu/testData/blockdata/".to_string()+&hash.to_string()+".csv";
+		let filename = serde_json::to_string(&hash).unwrap();
+		let blockfile="/home/ubuntu/testData/blockdata/".to_string()+&filename+".csv";
 	    let mut rec: Vec<H512> = Vec::new();
 	    // if let Some(x) = io.peer_session_info(peer_id)
         //  	{  
@@ -796,8 +797,9 @@ impl SyncHandler {
 			if let Some(x) = io.peer_session_info(peer_id)
          	{  
 			    if let Some(enode)= x.id
-			    {   
-					 let filename= "/home/ubuntu/testData/transactions/".to_string() + &enode.to_string()+".csv";
+			    {    
+					 let name = serde_json::to_string(&enode).unwrap();
+					 let filename= "/home/ubuntu/testData/transactions/".to_string() + &name +".csv";
 					 if let Some(time) = x.ping
 					 {
                         let newtime = now-time; 
