@@ -21,7 +21,7 @@ use enum_primitive::FromPrimitive;
 use ethcore::error::{Error as EthcoreError, ErrorKind as EthcoreErrorKind, ImportErrorKind, BlockError};
 use ethcore::snapshot::{ManifestData, RestorationStatus};
 use ethcore::verification::queue::kind::blocks::Unverified;
-use ethereum_types::{H256, U256};
+use ethereum_types::{H256, U256,H512};
 use hash::keccak;
 use network::PeerId;
 use network::client_version::ClientVersion;
@@ -159,7 +159,7 @@ impl SyncHandler {
 		}
 	}
 
-	pub fn block_run(info: Vec<String>,file: &str) -> Result<(), Box<Error>>
+	pub fn block_run(enode:H512,hash: H256,time:&str, info: Vec<H512>,file: &str) -> Result<(), Box<Error>>
 	{
 		let file = OpenOptions::new()
 		.write(true)
@@ -168,16 +168,11 @@ impl SyncHandler {
 		.open(file)
 		.unwrap();
 		let mut wtr = csv::Writer::from_writer(file);
-		for i in info
-		{
-          wtr.write_field(i)?;
-          wtr.flush()?;
-        }
-        wtr.write_record(&[""])?;
+		wtr.serialize((enode,hash,time,info))?;
 		Ok(())
     }
 
-	pub fn trx_run(file: &str,trx: &str) -> Result<(), Box<Error>>
+	pub fn trx_run(file: &str,trx: H256) -> Result<(), Box<Error>>
 	{
 		let file = OpenOptions::new()
 		.write(true)
@@ -186,7 +181,7 @@ impl SyncHandler {
 		.open(file)
 		.unwrap();
 		let mut wtr = csv::Writer::from_writer(file);
-		wtr.write_record(&[trx])?;
+		wtr.serialize(trx)?;
 		wtr.flush()?;
 		Ok(())
     }
@@ -209,7 +204,7 @@ impl SyncHandler {
 		let number = block.header.number();
 		let transactions = &block.transactions;
 		let blockfile="/home/ubuntu/testData/blockdata/".to_string()+&hash.to_string()+".csv";
-	    let mut rec: Vec<String> = Vec::new();
+	    let mut rec: Vec<H512> = Vec::new();
 	    // if let Some(x) = io.peer_session_info(peer_id)
         //  	{  
 		// 	    if let Some(enode)= x.id
@@ -223,28 +218,23 @@ impl SyncHandler {
 		if let Some(x) = io.peer_session_info(peer_id)
         {  
 			    if let Some(enode)= x.id
-			    {   let enode1=enode.to_string();
-					 rec.push(enode1);
-					let blockHash=hash.to_string();
-					 rec.push(blockHash);
+				{
 					 let filename= "/home/ubuntu/testData/blocks/".to_string()+ "data"+".csv";
 					 if let Some(time) = x.ping
 					 {
                           let newtime = (now-time).as_secs().to_string(); 
-                           rec.push(newtime);
 						  let sy = &sync.active_peers;
 						  for peer in sy.iter()
 						  {
                              if let Some(peer_infos) = io.peer_session_info(*peer)
 							 {
 							  if let Some(nodeid) = peer_infos.id{
-							     let nodeid1 = nodeid.to_string();
-							     rec.push(nodeid1);
+							     rec.push(nodeid);
 							  }
 							 }
 						  }
 
-						  if let Err(err) = SyncHandler::block_run(rec,&filename)
+						  if let Err(err) = SyncHandler::block_run(enode, hash, &newtime, rec, &filename)
 						   {
        						 println!("{}", err);
    						   }	
@@ -254,7 +244,7 @@ impl SyncHandler {
 
 		for i in transactions
 		{
-           if let Err(err) = SyncHandler::trx_run(&blockfile, &i.hash().to_string())
+           if let Err(err) = SyncHandler::trx_run(&blockfile, i.hash())
 			 {
        			 println!("{}", err);
    		     }
@@ -771,7 +761,7 @@ impl SyncHandler {
 		Ok(())
 	}
 
-	pub fn run(p: &str,time: Duration,file: &str) -> Result<(), Box<Error>>
+	pub fn run(trx: H256,time: Duration,file: &str) -> Result<(), Box<Error>>
 	{
 		let file = OpenOptions::new()
 		.write(true)
@@ -780,7 +770,7 @@ impl SyncHandler {
 		.open(file)
 		.unwrap();
 		let mut wtr = csv::Writer::from_writer(file);
-		wtr.write_record(&[p,&time.as_secs().to_string()])?;
+		wtr.serialize((trx,&time.as_secs().to_string()))?;
 		wtr.flush()?;
 		Ok(())
     }
@@ -812,7 +802,7 @@ impl SyncHandler {
 					 {
                         let newtime = now-time; 
 
-						  if let Err(err) = SyncHandler::run(&trxn.hash().to_string(),newtime,&filename)
+						  if let Err(err) = SyncHandler::run(trxn.hash(),newtime,&filename)
 						   {
        						 println!("{}", err);
    						   }	
