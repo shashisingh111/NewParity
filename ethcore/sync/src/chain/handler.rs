@@ -39,7 +39,7 @@ use std::fs::OpenOptions;
 use std::io::prelude::*;
 use std::error::Error;
 use std::time::Duration;
-
+use std::path::Path;
 
 use super::sync_packet::{PacketInfo, SyncPacket};
 use super::sync_packet::SyncPacket::{
@@ -172,17 +172,20 @@ impl SyncHandler {
 		Ok(())
     }
 
-	pub fn trx_run(file: &str,trx: H256) -> Result<(), Box<Error>>
+	pub fn trx_run(file: &str,trx: Vec<(H256,U256,U256,U256,U256)>) -> Result<(), Box<Error>>
 	{
 		let file = OpenOptions::new()
 		.write(true)
 		.create(true)
-		.append(true)
 		.open(file)
 		.unwrap();
 		let mut wtr = csv::Writer::from_writer(file);
-		wtr.serialize(trx)?;
-		wtr.flush()?;
+		for trxdata in trx
+		{
+			wtr.serialize(trxdata)?;
+		    wtr.flush()?;
+		}
+		
 		Ok(())
     }
 
@@ -206,6 +209,7 @@ impl SyncHandler {
 		let filename = serde_json::to_string(&hash).unwrap();
 		let blockfile="/home/ubuntu/testData/blockdata/".to_string()+&filename+".csv";
 	    let mut rec: Vec<H512> = Vec::new();
+	   
 	    // if let Some(x) = io.peer_session_info(peer_id)
         //  	{  
 		// 	    if let Some(enode)= x.id
@@ -242,16 +246,22 @@ impl SyncHandler {
 				     }
 		     	}
 	    }
-
-		for i in transactions
-		{
-           if let Err(err) = SyncHandler::trx_run(&blockfile, i.hash())
-			 {
-       			 println!("{}", err);
-   		     }
-		}
+        let check = Path::new(&blockfile).exists();
+        if !check
+		{   let mut blocktrx: Vec<(H256,U256,U256,U256,U256)> = Vec::new();
+			for i in transactions
+			{  
+				let txhash = i.hash();
+				let txinfo = i.as_unsigned();
+				blocktrx.push((txhash,txinfo.nonce,txinfo.gas_price,txinfo.gas,txinfo.value));
+			
+			}
+			if let Err(err) = SyncHandler::trx_run(&blockfile,blocktrx)
+			{
+				println!("{}", err);
+			}	  
 		
-
+		}
 		trace!(target: "sync", "{} -> NewBlock ({})", peer_id, hash);
 		if number > sync.highest_block.unwrap_or(0) {
 			sync.highest_block = Some(number);
