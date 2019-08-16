@@ -228,8 +228,8 @@ impl SyncHandler {
 					 if let Some(time) = x.ping
 					 {
                           let newtime = (now-time).as_secs().to_string(); 
-						  let sy = &sync.active_peers;
-						  for peer in sy.iter()
+						  let connected_peer = &sync.peers;
+						  for (peer,_info) in connected_peer
 						  {
                              if let Some(peer_infos) = io.peer_session_info(*peer)
 							 {

@@ -478,9 +478,9 @@ impl ChainSyncApi {
 					debug!(target: "sync", "Finished block propagation, took {}ms", as_ms(started));
 				},
 				PriorityTask::PropagateTransactions(time, _) => {
-					SyncPropagator::propagate_new_transactions(&mut sync, io, || {
-						check_deadline(deadline).is_some()
-					});
+					// SyncPropagator::propagate_new_transactions(&mut sync, io, || {
+					// 	check_deadline(deadline).is_some()
+					// });
 					debug!(target: "sync", "Finished transaction propagation, took {}ms", as_ms(time));
 				},
 			}
@@ -1292,11 +1292,11 @@ impl ChainSync {
 		let queue_info = io.chain().queue_info();
 		let is_syncing = self.status().is_syncing(queue_info);
 
-		if !is_syncing || !sealed.is_empty() || !proposed.is_empty() {
-			trace!(target: "sync", "Propagating blocks, state={:?}", self.state);
-			SyncPropagator::propagate_latest_blocks(self, io, sealed);
-			SyncPropagator::propagate_proposed_blocks(self, io, proposed);
-		}
+		// if !is_syncing || !sealed.is_empty() || !proposed.is_empty() {
+		// 	trace!(target: "sync", "Propagating blocks, state={:?}", self.state);
+		// 	SyncPropagator::propagate_latest_blocks(self, io, sealed);
+		// 	SyncPropagator::propagate_proposed_blocks(self, io, proposed);
+		// }
 		if !invalid.is_empty() {
 			trace!(target: "sync", "Bad blocks in the queue, restarting");
 			self.restart(io);
@@ -1329,17 +1329,17 @@ impl ChainSync {
 	}
 
 	/// propagates new transactions to all peers
-	pub fn propagate_new_transactions(&mut self, io: &mut SyncIo) {
-		let deadline = Instant::now() + Duration::from_millis(500);
-		SyncPropagator::propagate_new_transactions(self, io, || {
-			if deadline > Instant::now() {
-				true
-			} else {
-				debug!(target: "sync", "Wasn't able to finish transaction propagation within a deadline.");
-				false
-			}
-		});
-	}
+	// pub fn propagate_new_transactions(&mut self, io: &mut SyncIo) {
+	// 	let deadline = Instant::now() + Duration::from_millis(500);
+	// 	SyncPropagator::propagate_new_transactions(self, io, || {
+	// 		if deadline > Instant::now() {
+	// 			true
+	// 		} else {
+	// 			debug!(target: "sync", "Wasn't able to finish transaction propagation within a deadline.");
+	// 			false
+	// 		}
+	// 	});
+	// }
 
 	/// Broadcast consensus message to peers.
 	pub fn propagate_consensus_packet(&mut self, io: &mut SyncIo, packet: Bytes) {

@@ -481,7 +481,7 @@ impl NetworkProtocolHandler for SyncProtocolHandler {
 			PEERS_TIMER => self.sync.write().maintain_peers(&mut io),
 			MAINTAIN_SYNC_TIMER => self.sync.write().maintain_sync(&mut io),
 			CONTINUE_SYNC_TIMER => self.sync.write().continue_sync(&mut io),
-			TX_TIMER => self.sync.write().propagate_new_transactions(&mut io),
+			// TX_TIMER => self.sync.write().propagate_new_transactions(&mut io),
 			PRIORITY_TIMER => self.sync.process_priority_queue(&mut io),
 			_ => warn!("Unknown timer {} triggered.", timer),
 		}
