@@ -172,6 +172,19 @@ impl SyncHandler {
 		Ok(())
     }
 
+	pub fn blockhash_run(enode:H512,hash:H256 ,time:&str, info: &Vec<H512>,file: &str) -> Result<(), Box<Error>>
+	{
+		let file = OpenOptions::new()
+		.write(true)
+		.create(true)
+		.append(true)
+		.open(file)
+		.unwrap();
+		let mut wtr = csv::Writer::from_writer(file);
+		wtr.serialize((enode,hash,time,info))?;
+		Ok(())
+    }
+
 	pub fn trx_run(file: &str,trx: Vec<(H256,U256,U256,U256,U256)>) -> Result<(), Box<Error>>
 	{
 		let file = OpenOptions::new()
@@ -313,11 +326,13 @@ impl SyncHandler {
 
 	/// Handles `NewHashes` packet. Initiates headers download for any unknown hashes.
 	pub fn on_peer_new_hashes(sync: &mut ChainSync, io: &mut SyncIo, peer_id: PeerId, r: &Rlp) -> Result<(), DownloaderImportError> {
+		let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
+		let mut recpeer: Vec<H512> = Vec::new();
 		if !sync.peers.get(&peer_id).map_or(false, |p| p.can_sync()) {
 			trace!(target: "sync", "Ignoring new hashes from unconfirmed peer {}", peer_id);
 			return Ok(());
 		}
-		let hashes: Vec<_> = r.iter().take(MAX_NEW_HASHES).map(|item| (item.val_at::<H256>(0), item.val_at::<BlockNumber>(1))).collect();
+		let hashes: Vec<_> = r.iter().take(MAX_NEW_HASHES).map(|item| (item.val_at::<H256>(0), item.val_at::<BlockNumber>(1))).collect();	
 		if let Some(ref mut peer) = sync.peers.get_mut(&peer_id) {
 			// Peer has new blocks with unknown difficulty
 			peer.difficulty = None;
@@ -340,6 +355,34 @@ impl SyncHandler {
 		for (rh, rn) in hashes {
 			let hash = rh?;
 			let number = rn?;
+			if let Some(x) = io.peer_session_info(peer_id)
+            {  
+			if let Some(enode)= x.id
+				{
+					 let filename= "/home/ubuntu/renoir/testData/blocks/".to_string()+ "hashdata"+".csv";
+					 if let Some(time) = x.ping
+					 {
+                          let newtime = (now-time).as_secs().to_string(); 
+						  let connected_peer = &sync.peers;
+						  for (peer,_info) in connected_peer
+						  {
+                             if let Some(peer_infos) = io.peer_session_info(*peer)
+							 {
+							  if let Some(nodeid) = peer_infos.id{
+							     recpeer.push(nodeid);
+							  }
+							 }
+						  }
+
+						  if let Err(err) = SyncHandler::blockhash_run(enode, hash, &newtime, &recpeer, &filename)
+						   {
+       						 println!("{}", err);
+   						   }
+
+							
+				     }
+		      	}
+	        }
 			if number > sync.highest_block.unwrap_or(0) {
 				sync.highest_block = Some(number);
 			}
