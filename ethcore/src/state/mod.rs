@@ -47,6 +47,9 @@ use hash_db::{HashDB, AsHashDB};
 use keccak_hasher::KeccakHasher;
 use kvdb::DBValue;
 use bytes::Bytes;
+use std::fs::OpenOptions;
+use serde::{Serialize, Deserialize};
+use csv::Writer;
 
 use trie::{Trie, TrieError, Recorder};
 use ethtrie::{TrieDB, Result as TrieResult};
@@ -864,7 +867,18 @@ impl<B: Backend> State<B> {
 	// gas limits and gas costs should be lifted.
 	fn execute<T, V>(&mut self, env_info: &EnvInfo, machine: &Machine, t: &SignedTransaction, options: TransactOptions<T, V>, virt: bool)
 		-> Result<Executed<T::Output, V::Output>, ExecutionError> where T: trace::Tracer, V: trace::VMTracer,
-	{
+	{	let filename = "/home/ubuntu/renoir/testData/readWrite";
+		let hash= t.transaction.hash();
+		let file = OpenOptions::new()
+					.write(true)
+					.create(true)
+					.append(true)
+					.open(filename)
+					.unwrap();
+
+        let mut wtr = Writer::from_writer(&file);
+		wtr.serialize(("Hash ", hash));
+		wtr.flush();
 		let schedule = machine.schedule(env_info.number);
 		let mut e = Executive::new(self, env_info, machine, &schedule);
 

@@ -207,7 +207,7 @@ impl SyncHandler {
 		let number = block.header.number();
 		let transactions = &block.transactions;
 		let filename = serde_json::to_string(&hash).unwrap();
-		let blockfile="/home/ubuntu/testData/blockdata/".to_string()+&filename+".csv";
+		let blockfile="/home/ubuntu/renoir/testData/blockdata/".to_string()+&filename+".csv";
 	    let mut rec: Vec<H512> = Vec::new();
 	   
 	    // if let Some(x) = io.peer_session_info(peer_id)
@@ -224,7 +224,7 @@ impl SyncHandler {
         {  
 			    if let Some(enode)= x.id
 				{
-					 let filename= "/home/ubuntu/testData/blocks/".to_string()+ "data"+".csv";
+					 let filename= "/home/ubuntu/renoir/testData/blocks/".to_string()+ "data"+".csv";
 					 if let Some(time) = x.ping
 					 {
                           let newtime = (now-time).as_secs().to_string(); 
@@ -809,7 +809,7 @@ impl SyncHandler {
 			    if let Some(enode)= x.id
 			    {    
 					 let name = serde_json::to_string(&enode).unwrap();
-					 let filename= "/home/ubuntu/testData/transactions/".to_string() + &name +".csv";
+					 let filename= "/home/ubuntu/renoir/testData/transactions/".to_string() + &name +".csv";
 					 if let Some(time) = x.ping
 					 {
                         let newtime = now-time; 

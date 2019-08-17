@@ -30,6 +30,10 @@ use hash::keccak;
 use bytes::Bytes;
 use ethereum_types::{U256, H256, Address};
 use num_bigint::BigUint;
+use std::path::Path;
+use std::fs::OpenOptions;
+use csv::Writer;
+use std::error::Error;
 
 use vm::{
 	self, ActionParams, ParamsType, ActionValue, CallType, MessageCallResult,
@@ -488,6 +492,44 @@ impl<Cost: CostType> Interpreter<Cost> {
 		}
 	}
 
+	fn Sload( addr: H256, val: U256) -> Result<(), Box<dyn Error>>
+	{	let filename = "/home/ubuntu/renoir/testData/readWrite";
+		let pathcheck = Path::new(filename).exists();
+			if pathcheck
+				{
+					let file = OpenOptions::new()
+						.write(true)
+						.create(true)
+						.append(true)
+						.open(filename)
+						.unwrap();
+					let mut wtr = Writer::from_writer(&file);
+					wtr.serialize(("SSTORE ",addr, val))?;
+					wtr.flush()?;
+				}
+		Ok(())
+	}
+
+	fn Sstore( addr: H256, val: U256)-> Result<(), Box<dyn Error>>
+	{	let filename = "/home/ubuntu/renoir/testData/readWrite";
+		let pathcheck = Path::new(filename).exists();
+			if pathcheck
+				{
+					let file = OpenOptions::new()
+						.write(true)
+						.create(true)
+						.append(true)
+						.open(filename)
+						.unwrap();
+					let mut wtr = Writer::from_writer(&file);
+					wtr.serialize(("SLOAD ",addr, val))?;
+					wtr.flush()?;
+				}
+		Ok(())
+	}
+
+
+
 	fn exec_instruction(
 		&mut self,
 		gas: Cost,
@@ -495,6 +537,9 @@ impl<Cost: CostType> Interpreter<Cost> {
 		instruction: Instruction,
 		provided: Option<Cost>
 	) -> vm::Result<InstructionResult<Cost>> {
+		 
+		
+	
 		match instruction {
 			instructions::JUMP => {
 				let jump = self.stack.pop_back();
@@ -715,11 +760,17 @@ impl<Cost: CostType> Interpreter<Cost> {
 				let size = self.stack.pop_back();
 				let k = keccak(self.mem.read_slice(offset, size));
 				self.stack.push(U256::from(&*k));
+			
 			},
 			instructions::SLOAD => {
 				let key = H256::from(&self.stack.pop_back());
 				let word = U256::from(&*ext.storage_at(&key)?);
 				self.stack.push(word);
+				  if let Err(err) = Self::Sload(key,word)
+					{
+					println!("{}", err);
+					}
+				
 			},
 			instructions::SSTORE => {
 				let address = H256::from(&self.stack.pop_back());
@@ -737,6 +788,10 @@ impl<Cost: CostType> Interpreter<Cost> {
 					}
 				}
 				ext.set_storage(address, H256::from(&val))?;
+				if let Err(err) = Self::Sstore(address,val)
+					{
+					println!("{}", err);
+					}
 			},
 			instructions::PC => {
 				self.stack.push(U256::from(self.reader.position - 1));

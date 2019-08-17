@@ -105,6 +105,7 @@ extern crate unexpected;
 extern crate using_queue;
 extern crate vm;
 extern crate wasm;
+extern crate csv;
 
 #[cfg(test)]
 extern crate ethcore_accounts as accounts;

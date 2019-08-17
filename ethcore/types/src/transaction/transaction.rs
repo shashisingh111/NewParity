@@ -407,7 +407,7 @@ impl UnverifiedTransaction {
 /// A `UnverifiedTransaction` with successfully recovered `sender`.
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct SignedTransaction {
-	transaction: UnverifiedTransaction,
+	pub transaction: UnverifiedTransaction,
 	sender: Address,
 	public: Option<Public>,
 }
@@ -428,6 +428,7 @@ impl Deref for SignedTransaction {
 		&self.transaction
 	}
 }
+
 
 impl From<SignedTransaction> for UnverifiedTransaction {
 	fn from(tx: SignedTransaction) -> Self {
@@ -458,6 +459,11 @@ impl SignedTransaction {
 	/// Returns transaction sender.
 	pub fn sender(&self) -> Address {
 		self.sender
+	}
+
+	pub fn send_transaction(self)->UnverifiedTransaction
+	{
+		self.transaction
 	}
 
 	/// Returns a public key of the sender.
