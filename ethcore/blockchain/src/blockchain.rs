@@ -602,21 +602,21 @@ impl BlockChain {
 				block: best_block_rlp,
 			};
 
-			let block_number = bc.best_block.read().header.number();
-			let change_block = block_number - 5; 
-			let block_hash =  bc.block_hash(change_block).unwrap();
+			// let block_number = bc.best_block.read().header.number();
+			// let change_block = block_number - 5; 
+			// let block_hash =  bc.block_hash(change_block).unwrap();
 
-			let new_best_block_total_difficulty = bc.block_details(&block_hash)
-				.expect("Best block is from a known block hash; a known block hash always comes with a known block detail; qed")
-				.total_difficulty;
-			let new_best_block_rlp = bc.block(&block_hash)
-				.expect("Best block is from a known block hash; qed");
+			// let new_best_block_total_difficulty = bc.block_details(&block_hash)
+			// 	.expect("Best block is from a known block hash; a known block hash always comes with a known block detail; qed")
+			// 	.total_difficulty;
+			// let new_best_block_rlp = bc.block(&block_hash)
+			// 	.expect("Best block is from a known block hash; qed");
 
-			*best_block = BestBlock {
-				total_difficulty: new_best_block_total_difficulty,
-				header: new_best_block_rlp.decode_header(),
-				block:  new_best_block_rlp,
-			};
+			// *best_block = BestBlock {
+			// 	total_difficulty: new_best_block_total_difficulty,
+			// 	header: new_best_block_rlp.decode_header(),
+			// 	block:  new_best_block_rlp,
+			// };
 
 
 		}
