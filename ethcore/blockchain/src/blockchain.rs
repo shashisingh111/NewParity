@@ -603,7 +603,7 @@ impl BlockChain {
 			};
 
 			// let block_number = bc.best_block.read().header.number();
-			// let change_block = block_number - 5; 
+			// let change_block = block_number-5; 
 			// let block_hash =  bc.block_hash(change_block).unwrap();
 
 			// let new_best_block_total_difficulty = bc.block_details(&block_hash)

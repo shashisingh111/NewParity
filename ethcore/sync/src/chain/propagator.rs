@@ -250,12 +250,18 @@ impl SyncPropagator {
 	}
 
 	pub fn propagate_latest_blocks(sync: &mut ChainSync, io: &mut SyncIo, sealed: &[H256]) {
+		println!("send latest block..");
 		let chain_info = io.chain().chain_info();
+		let con_peer=&sync.peers;
+		println!("connected peer: {}",con_peer.len());
 		if (((chain_info.best_block_number as i64) - (sync.last_sent_block_number as i64)).abs() as BlockNumber) < MAX_PEER_LAG_PROPAGATION {
 			let peers = sync.get_lagging_peers(&chain_info);
+			println!("lagging peer: {}",peers.len());
+			
 			if sealed.is_empty() {
 				let hashes = SyncPropagator::propagate_new_hashes(sync, &chain_info, io, &peers);
 				let peers = ChainSync::select_random_peers(&peers);
+				println!("selected peer:{}",peers.len());
 				let blocks = SyncPropagator::propagate_blocks(sync, &chain_info, io, sealed, &peers);
 				if blocks != 0 || hashes != 0 {
 					trace!(target: "sync", "Sent latest {} blocks and {} hashes to peers.", blocks, hashes);

@@ -478,9 +478,9 @@ impl ChainSyncApi {
 					debug!(target: "sync", "Finished block propagation, took {}ms", as_ms(started));
 				},
 				PriorityTask::PropagateTransactions(time, _) => {
-					// SyncPropagator::propagate_new_transactions(&mut sync, io, || {
-					// 	check_deadline(deadline).is_some()
-					// });
+					SyncPropagator::propagate_new_transactions(&mut sync, io, || {
+						check_deadline(deadline).is_some()
+					});
 					debug!(target: "sync", "Finished transaction propagation, took {}ms", as_ms(time));
 				},
 			}
@@ -1138,6 +1138,7 @@ impl ChainSync {
 
 	/// Send Status message
 	fn send_status(&mut self, io: &mut SyncIo, peer: PeerId) -> Result<(), network::Error> {
+		println!("Send status to peer...{}",peer);
 		let warp_protocol_version = io.protocol_version(&WARP_SYNC_PROTOCOL_ID, peer);
 		let warp_protocol = warp_protocol_version != 0;
 		let private_tx_protocol = warp_protocol_version >= PAR_PROTOCOL_VERSION_3.0;
@@ -1292,11 +1293,11 @@ impl ChainSync {
 		let queue_info = io.chain().queue_info();
 		let is_syncing = self.status().is_syncing(queue_info);
 
-		// if !is_syncing || !sealed.is_empty() || !proposed.is_empty() {
-		// 	trace!(target: "sync", "Propagating blocks, state={:?}", self.state);
-		// 	SyncPropagator::propagate_latest_blocks(self, io, sealed);
-		// 	SyncPropagator::propagate_proposed_blocks(self, io, proposed);
-		// }
+		if !is_syncing || !sealed.is_empty() || !proposed.is_empty() {
+			trace!(target: "sync", "Propagating blocks, state={:?}", self.state);
+			SyncPropagator::propagate_latest_blocks(self, io, sealed);
+			SyncPropagator::propagate_proposed_blocks(self, io, proposed);
+		}
 		if !invalid.is_empty() {
 			trace!(target: "sync", "Bad blocks in the queue, restarting");
 			self.restart(io);
@@ -1329,17 +1330,17 @@ impl ChainSync {
 	}
 
 	/// propagates new transactions to all peers
-	// pub fn propagate_new_transactions(&mut self, io: &mut SyncIo) {
-	// 	let deadline = Instant::now() + Duration::from_millis(500);
-	// 	SyncPropagator::propagate_new_transactions(self, io, || {
-	// 		if deadline > Instant::now() {
-	// 			true
-	// 		} else {
-	// 			debug!(target: "sync", "Wasn't able to finish transaction propagation within a deadline.");
-	// 			false
-	// 		}
-	// 	});
-	// }
+	pub fn propagate_new_transactions(&mut self, io: &mut SyncIo) {
+		let deadline = Instant::now() + Duration::from_millis(500);
+		SyncPropagator::propagate_new_transactions(self, io, || {
+			if deadline > Instant::now() {
+				true
+			} else {
+				debug!(target: "sync", "Wasn't able to finish transaction propagation within a deadline.");
+				false
+			}
+		});
+	}
 
 	/// Broadcast consensus message to peers.
 	pub fn propagate_consensus_packet(&mut self, io: &mut SyncIo, packet: Bytes) {

@@ -228,8 +228,14 @@ impl<T: ChainDataFetcher> Client<T> {
 	/// Get the chain info.
 	pub fn chain_info(&self) -> BlockChainInfo {
 		let best_hdr = self.chain.best_header();
-		let best_td = self.chain.best_block().total_difficulty;
+		// let phash1 = best_hdr.parent_hash();
+		// let phdr1 = self.chain.block_header(BlockId::Hash(phash1)).unwrap();
+		// let phash2 = phdr1.parent_hash();
+		// let phdr2 = self.chain.block_header(BlockId::Hash(phash2)).unwrap();
+		// let phash3 = phdr2.parent_hash();
+		// let best_hdr = self.chain.block_header(BlockId::Hash(phash3)).unwrap();
 
+		let best_td = self.chain.best_block().total_difficulty;
 		let first_block = self.chain.first_block();
 		let genesis_hash = self.chain.genesis_hash();
 
