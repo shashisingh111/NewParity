@@ -332,29 +332,12 @@ impl SyncHandler {
 			trace!(target: "sync", "Ignoring new hashes from unconfirmed peer {}", peer_id);
 			return Ok(());
 		}
+		let newhash: Vec<_> = r.iter().take(MAX_NEW_HASHES).map(|item| (item.val_at::<H256>(0), item.val_at::<BlockNumber>(1))).collect();
 		let hashes: Vec<_> = r.iter().take(MAX_NEW_HASHES).map(|item| (item.val_at::<H256>(0), item.val_at::<BlockNumber>(1))).collect();	
-		if let Some(ref mut peer) = sync.peers.get_mut(&peer_id) {
-			// Peer has new blocks with unknown difficulty
-			peer.difficulty = None;
-			if let Some(&(Ok(ref h), _)) = hashes.last() {
-				peer.latest_hash = h.clone();
-			}
-		}
-		if sync.state != SyncState::Idle {
-			trace!(target: "sync", "Ignoring new hashes since we're already downloading.");
-			let max = r.iter().take(MAX_NEW_HASHES).map(|item| item.val_at::<BlockNumber>(1).unwrap_or(0)).fold(0u64, cmp::max);
-			if max > sync.highest_block.unwrap_or(0) {
-				sync.highest_block = Some(max);
-			}
-			return Ok(());
-		}
-		trace!(target: "sync", "{} -> NewHashes ({} entries)", peer_id, r.item_count()?);
-		let mut max_height: BlockNumber = 0;
-		let mut new_hashes = Vec::new();
-		let last_imported_number = sync.new_blocks.last_imported_block_number();
-		for (rh, rn) in hashes {
-			let hash = rh?;
-			let number = rn?;
+		
+		for (r,_n) in newhash
+		{
+			let hash= r?;
 			if let Some(x) = io.peer_session_info(peer_id)
             {  
 			if let Some(enode)= x.id
@@ -383,6 +366,31 @@ impl SyncHandler {
 				     }
 		      	}
 	        }
+		}
+		
+		if let Some(ref mut peer) = sync.peers.get_mut(&peer_id) {
+			// Peer has new blocks with unknown difficulty
+			peer.difficulty = None;
+			if let Some(&(Ok(ref h), _)) = hashes.last() {
+				peer.latest_hash = h.clone();
+			}
+		}
+		if sync.state != SyncState::Idle {
+			trace!(target: "sync", "Ignoring new hashes since we're already downloading.");
+			let max = r.iter().take(MAX_NEW_HASHES).map(|item| item.val_at::<BlockNumber>(1).unwrap_or(0)).fold(0u64, cmp::max);
+			if max > sync.highest_block.unwrap_or(0) {
+				sync.highest_block = Some(max);
+			}
+			return Ok(());
+		}
+	
+		trace!(target: "sync", "{} -> NewHashes ({} entries)", peer_id, r.item_count()?);
+		let mut max_height: BlockNumber = 0;
+		let mut new_hashes = Vec::new();
+		let last_imported_number = sync.new_blocks.last_imported_block_number();
+		for (rh, rn) in hashes {
+			let hash = rh?;
+			let number = rn?;
 			if number > sync.highest_block.unwrap_or(0) {
 				sync.highest_block = Some(number);
 			}
