@@ -169,6 +169,7 @@ impl SyncHandler {
 		.unwrap();
 		let mut wtr = csv::Writer::from_writer(file);
 		wtr.serialize((enode,hash,time,info))?;
+		wtr.flush()?;
 		Ok(())
     }
 
@@ -182,6 +183,7 @@ impl SyncHandler {
 		.unwrap();
 		let mut wtr = csv::Writer::from_writer(file);
 		wtr.serialize((enode,hash,time,info))?;
+		wtr.flush()?;
 		Ok(())
     }
 
@@ -195,9 +197,9 @@ impl SyncHandler {
 		let mut wtr = csv::Writer::from_writer(file);
 		for trxdata in trx
 		{
-			wtr.serialize(trxdata)?;
-		    wtr.flush()?;
+			wtr.serialize(trxdata)?;   
 		}
+		wtr.flush()?;
 		
 		Ok(())
     }

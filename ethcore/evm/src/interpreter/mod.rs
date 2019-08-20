@@ -522,7 +522,7 @@ impl<Cost: CostType> Interpreter<Cost> {
 						.open(filename)
 						.unwrap();
 					let mut wtr = Writer::from_writer(&file);
-					wtr.serialize((info))?;
+					wtr.serialize(info)?;
 					wtr.flush()?;
 				}
 		Ok(())
