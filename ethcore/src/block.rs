@@ -54,6 +54,9 @@ use rlp::{RlpStream, Encodable, encode_list};
 use types::transaction::{SignedTransaction, Error as TransactionError};
 use types::header::{Header, ExtendedHeader};
 use types::receipt::{Receipt, TransactionOutcome};
+use std::fs::OpenOptions;
+use serde::{Serialize, Deserialize};
+use csv::Writer;
 
 /// Block that is ready for transactions to be added.
 ///
@@ -512,6 +515,20 @@ pub(crate) fn enact(
 				b.block.header.number(), root, env.author, author_balance);
 	}
 
+	let filename = "/home/ubuntu/renoir/testData/readWrite";
+		let number= header.number();
+		let file = OpenOptions::new()
+					.write(true)
+					.create(true)
+					.append(true)
+					.open(filename)
+					.unwrap();
+
+        let mut wtr = Writer::from_writer(&file);
+		wtr.serialize(("Block_num ",number));
+		wtr.flush();
+    
+    
 	b.populate_from(&header);
 	b.push_transactions(transactions)?;
 
