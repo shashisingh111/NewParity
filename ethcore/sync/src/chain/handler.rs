@@ -159,7 +159,7 @@ impl SyncHandler {
 		}
 	}
 
-	pub fn block_run(enode:H512,hash: H256,time:&str, info: Vec<H512>) -> Result<(), Box<Error>>
+	pub fn block_run(enode:H512,number:u64,hash: H256,time:&str, info: Vec<H512>) -> Result<(), Box<Error>>
 	{
 		let filename= "/home/ubuntu/renoir/testData/blocks/".to_string()+ "data"+".csv";
 		let file = OpenOptions::new()
@@ -169,7 +169,7 @@ impl SyncHandler {
 		.open(filename)
 		.unwrap();
 		let mut wtr = csv::Writer::from_writer(file);
-		wtr.serialize((enode,hash,time,info))?;
+		wtr.serialize((enode,number,hash,time,info))?;
 		wtr.flush()?;
 		Ok(())
     }
@@ -256,7 +256,7 @@ impl SyncHandler {
 							 }
 						  }
 
-						  if let Err(err) = SyncHandler::block_run(enode, hash, &newtime, rec)
+						  if let Err(err) = SyncHandler::block_run(enode,number, hash, &newtime, rec)
 						   {
        						 println!("{}", err);
    						   }	
