@@ -208,6 +208,10 @@ impl SyncHandler {
 
 	/// Called by peer once it has new block bodies
 	pub fn on_peer_new_block(sync: &mut ChainSync, io: &mut SyncIo, peer_id: PeerId, r: &Rlp) -> Result<(), DownloaderImportError> {
+		let block = Unverified::from_rlp(r.at(0)?.as_raw().to_vec())?;
+		let hash = block.header.hash();
+		let number = block.header.number();
+		println!("Block received.....",number);
 		if !sync.peers.get(&peer_id).map_or(false, |p| p.can_sync()) {
 			trace!(target: "sync", "Ignoring new block from unconfirmed peer {}", peer_id);
 			return Ok(());
@@ -219,9 +223,7 @@ impl SyncHandler {
 				peer.difficulty = Some(difficulty);
 			}
 		}
-		let block = Unverified::from_rlp(r.at(0)?.as_raw().to_vec())?;
-		let hash = block.header.hash();
-		let number = block.header.number();
+		println!("After check block....",block);
 		let transactions = &block.transactions;
 		let filename = serde_json::to_string(&hash).unwrap();
 		let blockfile="/home/ubuntu/renoir/testData/blockdata/".to_string()+&filename+".csv";
@@ -263,6 +265,7 @@ impl SyncHandler {
 				     }
 		     	}
 	    }
+
         let check = Path::new(&blockfile).exists();
         if !check
 		{   let mut blocktrx: Vec<(H256,U256,U256,U256,U256)> = Vec::new();
