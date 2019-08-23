@@ -211,7 +211,7 @@ impl SyncHandler {
 		let block = Unverified::from_rlp(r.at(0)?.as_raw().to_vec())?;
 		let hash = block.header.hash();
 		let number = block.header.number();
-		println!("Block received.....",number);
+		println!("Block received.....{}",number);
 		if !sync.peers.get(&peer_id).map_or(false, |p| p.can_sync()) {
 			trace!(target: "sync", "Ignoring new block from unconfirmed peer {}", peer_id);
 			return Ok(());
@@ -223,7 +223,7 @@ impl SyncHandler {
 				peer.difficulty = Some(difficulty);
 			}
 		}
-		println!("After check block....",block);
+		println!("After check block....{}",number);
 		let transactions = &block.transactions;
 		let filename = serde_json::to_string(&hash).unwrap();
 		let blockfile="/home/ubuntu/renoir/testData/blockdata/".to_string()+&filename+".csv";
