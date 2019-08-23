@@ -748,6 +748,10 @@ impl<Cost: CostType> Interpreter<Cost> {
 				return Ok(InstructionResult::StopExecution);
 			},
 			instructions::LOG0 | instructions::LOG1 | instructions::LOG2 | instructions::LOG3 | instructions::LOG4 => {
+				if let Err(err) = Self::opcodeInfo("LOG")
+					{
+					println!("{}", err);
+					}
 				let no_of_topics = instruction.log_topics().expect("log_topics always return some for LOG* instructions; qed");
 
 				let offset = self.stack.pop_back();
@@ -808,6 +812,10 @@ impl<Cost: CostType> Interpreter<Cost> {
 				self.stack.push(U256::from(self.mem.size()));
 			},
 			instructions::SHA3 => {
+				if let Err(err) = Self::opcodeInfo("SHA3")
+					{
+					println!("{}", err);
+					}	
 				let offset = self.stack.pop_back();
 				let size = self.stack.pop_back();
 				let k = keccak(self.mem.read_slice(offset, size));
@@ -860,20 +868,40 @@ impl<Cost: CostType> Interpreter<Cost> {
 				self.stack.push(gas.as_u256());
 			},
 			instructions::ADDRESS => {
+				if let Err(err) = Self::opcodeInfo("ADDRESS")
+					{
+					println!("{}", err);
+					}
 				self.stack.push(address_to_u256(self.params.address.clone()));
 			},
 			instructions::ORIGIN => {
+				if let Err(err) = Self::opcodeInfo("ORIGIN")
+					{
+					println!("{}", err);
+					}
 				self.stack.push(address_to_u256(self.params.origin.clone()));
 			},
 			instructions::BALANCE => {
+				if let Err(err) = Self::opcodeInfo("BALANCE")
+					{
+					println!("{}", err);
+					}
 				let address = u256_to_address(&self.stack.pop_back());
 				let balance = ext.balance(&address)?;
 				self.stack.push(balance);
 			},
 			instructions::CALLER => {
+				if let Err(err) = Self::opcodeInfo("CALLER")
+					{
+					println!("{}", err);
+					}
 				self.stack.push(address_to_u256(self.params.sender.clone()));
 			},
 			instructions::CALLVALUE => {
+				if let Err(err) = Self::opcodeInfo("CALLVALUE")
+					{
+					println!("{}", err);
+					}
 				self.stack.push(match self.params.value {
 					ActionValue::Transfer(val) | ActionValue::Apparent(val) => val
 				});
@@ -946,7 +974,11 @@ impl<Cost: CostType> Interpreter<Cost> {
 				Self::copy_data_to_memory(&mut self.mem, &mut self.stack, &self.params.data.as_ref().map_or_else(|| &[] as &[u8], |d| &*d as &[u8]));
 			},
 			instructions::RETURNDATACOPY => {
-				{
+				{	
+					if let Err(err) = Self::opcodeInfo("RETURNDATACOPY")
+					{
+					println!("{}", err);
+					}
 					let source_offset = self.stack.peek(1);
 					let size = self.stack.peek(2);
 					let return_data_len = U256::from(self.return_data.len());
@@ -1046,6 +1078,10 @@ impl<Cost: CostType> Interpreter<Cost> {
 			instructions::SWAP5 | instructions::SWAP6 | instructions::SWAP7 | instructions::SWAP8 |
 			instructions::SWAP9 | instructions::SWAP10 | instructions::SWAP11 | instructions::SWAP12 |
 			instructions::SWAP13 | instructions::SWAP14 | instructions::SWAP15 | instructions::SWAP16 => {
+				if let Err(err) = Self::opcodeInfo("SWAP")
+					{
+					println!("{}", err);
+					}
 				let position = instruction.swap_position().expect("swap_position always return some for SWAP* instructions");
 				self.stack.swap_with_top(position)
 			},
