@@ -856,30 +856,33 @@ impl SyncHandler {
 			trace!(target: "sync", "{} Ignoring transactions from unconfirmed/unknown peer", peer_id);
 			return Ok(());
 		}
-
+		println!("New transactions arrived...");
 		let item_count = r.item_count()?;
 		trace!(target: "sync", "{:02} -> Transactions ({} entries)", peer_id, item_count);
-		for i in 0 .. item_count {
-			let rlp = r.at(i)?;
-			let trxn: UnverifiedTransaction = rlp::Decodable::decode(&rlp).unwrap();
-			if let Some(x) = io.peer_session_info(peer_id)
-         	{  
-			    if let Some(enode)= x.id
-			    {    
-					 let name = serde_json::to_string(&enode).unwrap();
-					 let filename= "/home/ubuntu/renoir/testData/transactions/".to_string() + &name +".csv";
-					 if let Some(time) = x.ping
-					 {
-                        let newtime = now-time; 
-
-						  if let Err(err) = SyncHandler::run(trxn.hash(),trxn.nonce,trxn.gas_price, trxn.gas,trxn.value,newtime,&filename)
-						   {
-       						 println!("{}", err);
-   						   }	
-				    }
-		     	}
-	    	}
+		if let Some(peer)=io.peer_session_info(peer_id)
+		{
+		   if let Some(enode)= peer.id
+		   {  
+			  println!("transactions received from: {}",enode); 
+			  let name = serde_json::to_string(&enode).unwrap();
+		      if let Some(time)= peer.ping
+		      { 
+					let newtime = now-time; 
+					let filename= "/home/ubuntu/renoir/testData/transactions/".to_string() + &name +".csv";		
+					for i in 0 .. item_count
+					{
+						let rlp = r.at(i)?;
+						let trxn: UnverifiedTransaction = rlp::Decodable::decode(&rlp).unwrap();
+						if let Err(err) = SyncHandler::run(trxn.hash(),trxn.nonce,trxn.gas_price, trxn.gas,trxn.value,newtime,&filename)
+						{
+							println!("{}", err);
+						}
+					}
+			    }
+		    }
+		
 		}
+	
 		Ok(())
 	}
 
