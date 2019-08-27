@@ -249,7 +249,7 @@ impl SyncPropagator {
 		sent_to_peers
 	}
 
-	pub fn propagate_latest_blocks(sync: &mut ChainSync, io: &mut SyncIo, sealed: &[H256]) {
+	 pub fn propagate_latest_blocks(sync: &mut ChainSync, io: &mut SyncIo, sealed: &[H256]) {
 		println!("send latest block..");
 		let chain_info = io.chain().chain_info();
 		let con_peer=&sync.peers;

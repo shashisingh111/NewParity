@@ -830,7 +830,7 @@ impl SyncHandler {
 		Ok(())
 	}
 
-	pub fn run(trx: H256,time: Duration,file: &str) -> Result<(), Box<Error>>
+	pub fn run(trx: H256,nonce:U256,gas_price:U256,gas:U256,value:U256,time: Duration,file: &str) -> Result<(), Box<Error>>
 	{
 		let file = OpenOptions::new()
 		.write(true)
@@ -839,7 +839,7 @@ impl SyncHandler {
 		.open(file)
 		.unwrap();
 		let mut wtr = csv::Writer::from_writer(file);
-		wtr.serialize((trx,&time.as_secs().to_string()))?;
+		wtr.serialize((trx,nonce,gas_price,gas,value, &time.as_secs().to_string()))?;
 		wtr.flush()?;
 		Ok(())
     }
@@ -872,7 +872,7 @@ impl SyncHandler {
 					 {
                         let newtime = now-time; 
 
-						  if let Err(err) = SyncHandler::run(trxn.hash(),newtime,&filename)
+						  if let Err(err) = SyncHandler::run(trxn.hash(),trxn.nonce,trxn.gas_price, trxn.gas,trxn.value,newtime,&filename)
 						   {
        						 println!("{}", err);
    						   }	

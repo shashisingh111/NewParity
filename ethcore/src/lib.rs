@@ -106,6 +106,7 @@ extern crate using_queue;
 extern crate vm;
 extern crate wasm;
 extern crate csv;
+extern crate serde_json;
 
 #[cfg(test)]
 extern crate ethcore_accounts as accounts;

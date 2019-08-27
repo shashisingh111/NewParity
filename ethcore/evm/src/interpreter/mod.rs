@@ -492,7 +492,7 @@ impl<Cost: CostType> Interpreter<Cost> {
 		}
 	}
 
-	fn Sdata( addr: H256, val: U256) -> Result<(), Box<dyn Error>>
+	fn Sdata(intype: &str, addr: H256, val: U256) -> Result<(), Box<dyn Error>>
 	{	let filename = "/home/ubuntu/renoir/testData/readWrite";
 		let pathcheck = Path::new(filename).exists();
 			if pathcheck
@@ -504,7 +504,7 @@ impl<Cost: CostType> Interpreter<Cost> {
 						.open(filename)
 						.unwrap();
 					let mut wtr = Writer::from_writer(&file);
-					wtr.serialize(("SSTORE ",addr, val))?;
+					wtr.serialize((intype,addr, val))?;
 					wtr.flush()?;
 				}
 		Ok(())
@@ -826,7 +826,7 @@ impl<Cost: CostType> Interpreter<Cost> {
 				let key = H256::from(&self.stack.pop_back());
 				let word = U256::from(&*ext.storage_at(&key)?);
 				self.stack.push(word);
-				  if let Err(err) = Self::Sdata(key,word)
+				  if let Err(err) = Self::Sdata("SLOAD",key,word)
 					{
 					println!("{}", err);
 					}
@@ -848,7 +848,7 @@ impl<Cost: CostType> Interpreter<Cost> {
 					}
 				}
 				ext.set_storage(address, H256::from(&val))?;
-				if let Err(err) = Self::Sdata(address,val)
+				if let Err(err) = Self::Sdata("SSTORE",address,val)
 					{
 					println!("{}", err);
 					}

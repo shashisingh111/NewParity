@@ -57,6 +57,7 @@ use types::receipt::{Receipt, TransactionOutcome};
 use std::fs::OpenOptions;
 use serde::{Serialize, Deserialize};
 use csv::Writer;
+use std::path::Path;
 
 /// Block that is ready for transactions to be added.
 ///
@@ -470,6 +471,24 @@ impl Drain for SealedBlock {
 	}
 }
 
+
+	pub fn blocktrx_run(file: &str,trx: Vec<(H256,U256,U256,U256,U256)>) -> Result<(), Box<Error>>
+	{
+		let file = OpenOptions::new()
+		.write(true)
+		.create(true)
+		.open(file)
+		.unwrap();
+		let mut wtr = csv::Writer::from_writer(file);
+		for trxdata in trx
+		{
+			wtr.serialize(trxdata);   
+		}
+		wtr.flush();
+		
+		Ok(())
+    }
+
 /// Enact the block given by block header, transactions and uncles
 pub(crate) fn enact(
 	header: Header,
@@ -525,8 +544,28 @@ pub(crate) fn enact(
 					.unwrap();
 
         let mut wtr = Writer::from_writer(&file);
-		wtr.serialize(("Block_num ",number));
+		wtr.serialize(("Block_num ",number,header.hash()));
 		wtr.flush();
+
+	let blockhash = header.hash();
+	let filename = serde_json::to_string(&blockhash).unwrap();
+	let blockfile="/home/ubuntu/renoir/testData/blockdata/".to_string()+&filename+".csv"; 	
+    let check = Path::new(&blockfile).exists();
+        if !check
+		{   let mut blocktrx: Vec<(H256,U256,U256,U256,U256)> = Vec::new();
+			for i in &transactions
+			{  
+				let txhash = i.hash();
+				let txinfo = i.as_unsigned();
+				blocktrx.push((txhash,txinfo.nonce,txinfo.gas_price,txinfo.gas,txinfo.value));
+			
+			}
+			if let Err(err) = blocktrx_run(&blockfile,blocktrx)
+			{
+				println!("{}", err);
+			}	  
+		
+		}	
     
     
 	b.populate_from(&header);
