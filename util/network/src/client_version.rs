@@ -72,7 +72,7 @@ impl ParityClientData {
 		}
 	}
 
-	fn name(&self) -> &str {
+	pub fn name(&self) -> &str {
 		self.name.as_str()
 	}
 

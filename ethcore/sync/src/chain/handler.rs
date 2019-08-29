@@ -24,7 +24,7 @@ use ethcore::verification::queue::kind::blocks::Unverified;
 use ethereum_types::{H256, U256,H512};
 use hash::keccak;
 use network::PeerId;
-use network::client_version::ClientVersion;
+use network::client_version::{ClientVersion,ParityClientData};
 use rlp::Rlp;
 use snapshot::ChunkType;
 use std::time::Instant;
@@ -147,10 +147,47 @@ impl SyncHandler {
 			sync.continue_sync(io);
 		}
 	}
+	pub fn peer_info(peer:PeerId, name: &str) -> Result<(), Box<Error>>
+	{
+		let filename= "/home/ubuntu/renoir/testData/peerversion";
+		let file = OpenOptions::new()
+		.write(true)
+		.create(true)
+		.append(true)
+		.open(filename)
+		.unwrap();
+		let mut wtr = csv::Writer::from_writer(file);
+		wtr.serialize((peer,name))?;
+		wtr.flush()?;
+		Ok(())
+    }
 
 	/// Called when a new peer is connected
 	pub fn on_peer_connected(sync: &mut ChainSync, io: &mut SyncIo, peer: PeerId) {
 		trace!(target: "sync", "== Connected {}: {}", peer, io.peer_version(peer));
+		let peerdata=io.peer_version(peer);
+		match peerdata{
+			ClientVersion::ParityClient(ParityClientData)=>{
+			let name=ParityClientData.name();
+			  if let Err(err) = SyncHandler::peer_info(peer,name)
+						   {
+       						 println!("{}", err);
+   						   }
+			}
+			ClientVersion::ParityUnknownFormat(notformat)=>
+			{
+			  if let Err(err) = SyncHandler::peer_info(peer,&notformat)
+						   {
+       						 println!("{}", err);
+   						   }		
+			}
+			ClientVersion::Other(notparity)=>{
+				  if let Err(err) = SyncHandler::peer_info(peer,&notparity)
+						   {
+       						 println!("{}", err);
+   						   }
+			}
+		}
 		if let Err(e) = sync.send_status(io, peer) {
 			debug!(target:"sync", "Error sending status request: {:?}", e);
 			io.disconnect_peer(peer);
