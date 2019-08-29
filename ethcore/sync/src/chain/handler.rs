@@ -165,29 +165,7 @@ impl SyncHandler {
 	/// Called when a new peer is connected
 	pub fn on_peer_connected(sync: &mut ChainSync, io: &mut SyncIo, peer: PeerId) {
 		trace!(target: "sync", "== Connected {}: {}", peer, io.peer_version(peer));
-		let peerdata=io.peer_version(peer);
-		match peerdata{
-			ClientVersion::ParityClient(ParityClientData)=>{
-			let name=ParityClientData.name();
-			  if let Err(err) = SyncHandler::peer_info(peer,name)
-						   {
-       						 println!("{}", err);
-   						   }
-			}
-			ClientVersion::ParityUnknownFormat(notformat)=>
-			{
-			  if let Err(err) = SyncHandler::peer_info(peer,&notformat)
-						   {
-       						 println!("{}", err);
-   						   }		
-			}
-			ClientVersion::Other(notparity)=>{
-				  if let Err(err) = SyncHandler::peer_info(peer,&notparity)
-						   {
-       						 println!("{}", err);
-   						   }
-			}
-		}
+		
 		if let Err(e) = sync.send_status(io, peer) {
 			debug!(target:"sync", "Error sending status request: {:?}", e);
 			io.disconnect_peer(peer);
@@ -829,6 +807,31 @@ impl SyncHandler {
 		if sync.sync_start_time.is_none() {
 			sync.sync_start_time = Some(Instant::now());
 		}
+
+	let peerdata=io.peer_version(peer_id);
+		match peerdata{
+			ClientVersion::ParityClient(ParityClientData)=>{
+			let name=ParityClientData.name();
+			  if let Err(err) = SyncHandler::peer_info(peer_id,name)
+						   {
+       						 println!("{}", err);
+   						   }
+			}
+			ClientVersion::ParityUnknownFormat(notformat)=>
+			{
+			  if let Err(err) = SyncHandler::peer_info(peer_id,&notformat)
+						   {
+       						 println!("{}", err);
+   						   }		
+			}
+			ClientVersion::Other(notparity)=>{
+				  if let Err(err) = SyncHandler::peer_info(peer_id,&notparity)
+						   {
+       						 println!("{}", err);
+   						   }
+			}
+		}
+
 
 		sync.peers.insert(peer_id.clone(), peer);
 		// Don't activate peer immediatelly when searching for common block.
